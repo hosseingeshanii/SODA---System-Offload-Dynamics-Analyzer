@@ -1,0 +1,28 @@
+# Example sweep spec for generate_sweep_config.py --spec this_file.yaml
+# Matches Prabhu's Oct 2026 email exactly. Edit the lists below (or copy this
+# file and make your own) rather than typing out --model/--isl/... by hand
+# for every case -- same claim-check against job_manifest.csv applies either
+# way, so there's no way to "skip" the duplicate-work protection by using
+# this instead of the CLI flags.
+#
+# OPEN DECISIONS (confirm at the meeting before running the full grid):
+#   - "high concurrency" below is a placeholder (128) -- Prabhu's email left
+#     this as "whatever's best for runtime," not a fixed number.
+#   - isl: 32768 is untested -- our Llama configs' rope-scaling params were
+#     tuned around 8192; worth a single test case before committing the
+#     whole sweep to it.
+
+sweeps:
+  - name: concurrency_sweep
+    models: [gpt2, llama3p2_1b, llama3p2_3b]
+    modes: [prefill, decode]
+    isl: [8192]
+    osl: [1024]
+    batch_size: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+
+  - name: isl_sweep
+    models: [gpt2, llama3p2_1b, llama3p2_3b]
+    modes: [prefill, decode]
+    isl: [1024, 2048, 4096, 8192, 16384, 32768]
+    osl: [1024]
+    batch_size: [1, 128]  # 1 = low concurrency, 128 = placeholder "high" point
