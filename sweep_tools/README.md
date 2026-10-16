@@ -1,6 +1,6 @@
-# Sweep Tools — Vanessa's Qwen1.5-MoE Resubmission
+# Sweep Tools
 
-Two scripts for running cases from the sweep plan, usable from any environment with Cerebras SDK/cstorch access — not just the shared cluster directory.
+Two scripts for running cases from the sweep plan, usable from any environment with Cerebras SDK/cstorch access --- not just the shared cluster directory. Anyone on the team can use this, not just whoever it was handed to first.
 
 ## 1. One-time setup
 
