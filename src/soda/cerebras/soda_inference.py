@@ -5,6 +5,7 @@ Injects CerebrasTracer metrics collection into the GPT/Llama inference execution
 import sys
 import os
 import time
+import json
 import logging
 import hashlib
 from contextlib import ExitStack
@@ -488,6 +489,30 @@ def run_soda_gpt_inference():
             global_rate,
             host_turnaround_s
         )
+
+        # Incremental progress safety net: append this step's data to disk as
+        # soon as it's known, separate from the final performance.json (which
+        # SODA only writes once, at the very end). If the job dies partway
+        # through, whatever steps completed are still recoverable here.
+        # Wrapped so a problem in this logging can never break the real run.
+        try:
+            progress_path = artifact_dir / "progress.json"
+            existing = []
+            if progress_path.exists():
+                existing = json.loads(progress_path.read_text())
+            existing.append({
+                "iteration": executor.user_iteration,
+                "is_warmup": executor.user_iteration <= workload["warmup_steps"],
+                "is_final": bool(executor.on_final_iteration),
+                "rate_samples_s": float(rate),
+                "global_rate_samples_s": float(global_rate),
+                "host_turnaround_s": float(host_turnaround_s),
+                "wall_clock": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            })
+            progress_path.write_text(json.dumps(existing, indent=2))
+        except Exception as e:
+            logging.warning(f"Could not write incremental progress.json ({e}); continuing run normally.")
+
         tracker_snapshot = (
             tracer.snapshot_rate_tracker(executor.profiler.rate_tracker)
             if executor.profiler
